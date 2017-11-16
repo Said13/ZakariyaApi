@@ -4,99 +4,68 @@ import HTTP
 
 final class Post: Model {
     let storage = Storage()
+    static let foreignIdKey = "post_id"
     
-    // MARK: Properties and database keys
+    var title: String?
+    var body: String?
     
-    /// The content of the post
-    var content: String
-    
-    /// The column names for `id` and `content` in the database
-    struct Keys {
-        static let id = "id"
-        static let content = "content"
+    init(title: String?, body: String?) {
+        self.title = title
+        self.body = body
     }
-
-    /// Creates a new Post
-    init(content: String) {
-        self.content = content
-    }
-
-    // MARK: Fluent Serialization
-
-    /// Initializes the Post from the
-    /// database row
+    
+    // initiate post with database data
     init(row: Row) throws {
-        content = try row.get(Post.Keys.content)
+        title = try row.get("title")
+        body = try row.get("body")
     }
-
-    // Serializes the Post to the database
+    
     func makeRow() throws -> Row {
         var row = Row()
-        try row.set(Post.Keys.content, content)
+        try row.set("title", title)
+        try row.set("body", body)
         return row
     }
 }
 
-// MARK: Fluent Preparation
-
+/// MARK: Fluent Preparation
 extension Post: Preparation {
-    /// Prepares a table/collection in the database
-    /// for storing Posts
+    
+    // prepares a table in the database
     static func prepare(_ database: Database) throws {
         try database.create(self) { builder in
             builder.id()
-            builder.string(Post.Keys.content)
+            builder.string("title")
+            builder.int("body")
         }
     }
-
-    /// Undoes what was done in `prepare`
+    
+    // deletes the table from the database
     static func revert(_ database: Database) throws {
         try database.delete(self)
     }
 }
 
-// MARK: JSON
-
-// How the model converts from / to JSON.
-// For example when:
-//     - Creating a new Post (POST /posts)
-//     - Fetching a post (GET /posts, GET /posts/:id)
-//
+/// MARK: JSON
 extension Post: JSONConvertible {
+    
+    // let you initiate post with json
     convenience init(json: JSON) throws {
         self.init(
-            content: try json.get(Post.Keys.content)
+            title: try json.get("title"),
+            body: try json.get("body")
         )
     }
     
+    // create json out of post instance
     func makeJSON() throws -> JSON {
         var json = JSON()
-        try json.set(Post.Keys.id, id)
-        try json.set(Post.Keys.content, content)
+        try json.set(Post.idKey, id)
+        try json.set("title", title)
+        try json.set("body", body)
         return json
     }
 }
 
-// MARK: HTTP
-
-// This allows Post models to be returned
-// directly in route closures
 extension Post: ResponseRepresentable { }
 
-// MARK: Update
-
-// This allows the Post model to be updated
-// dynamically by the request.
-extension Post: Updateable {
-    // Updateable keys are called when `post.update(for: req)` is called.
-    // Add as many updateable keys as you like here.
-    public static var updateableKeys: [UpdateableKey<Post>] {
-        return [
-            // If the request contains a String at key "content"
-            // the setter callback will be called.
-            UpdateableKey(Post.Keys.content, String.self) { post, content in
-                post.content = content
-            }
-        ]
-    }
-}
