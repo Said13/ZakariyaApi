@@ -4,10 +4,11 @@ import HTTP
 
 final class Post: Model {
     let storage = Storage()
-    static let foreignIdKey = "post_id"
+    static let idKey = "id"
     
     var title: String?
     var body: String?
+    
     
     init(title: String?, body: String?) {
         self.title = title
@@ -36,7 +37,7 @@ extension Post: Preparation {
         try database.create(self) { builder in
             builder.id()
             builder.string("title")
-            builder.int("body")
+            builder.string("body")
         }
     }
     
