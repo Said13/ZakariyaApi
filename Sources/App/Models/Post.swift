@@ -8,23 +8,27 @@ final class Post: Model {
     
     var title: String?
     var body: String?
+    var link: String?
     
     
-    init(title: String?, body: String?) {
+    init(title: String?, body: String?, link: String?) {
         self.title = title
         self.body = body
+        self.link = link
     }
     
     // initiate post with database data
     init(row: Row) throws {
         title = try row.get("title")
         body = try row.get("body")
+        link = try row.get("link")
     }
     
     func makeRow() throws -> Row {
         var row = Row()
         try row.set("title", title)
         try row.set("body", body)
+        try row.set("link", link)
         return row
     }
 }
@@ -37,7 +41,9 @@ extension Post: Preparation {
         try database.create(self) { builder in
             builder.id()
             builder.string("title")
-            builder.string("body")
+            builder.string("body", length: 4096)
+            builder.string("link")
+
         }
     }
     
@@ -54,7 +60,8 @@ extension Post: JSONConvertible {
     convenience init(json: JSON) throws {
         self.init(
             title: try json.get("title"),
-            body: try json.get("body")
+            body: try json.get("body"),
+            link: try json.get("link")
         )
     }
     
@@ -64,6 +71,7 @@ extension Post: JSONConvertible {
         try json.set(Post.idKey, id)
         try json.set("title", title)
         try json.set("body", body)
+        try json.set("link", link)
         return json
     }
 }
